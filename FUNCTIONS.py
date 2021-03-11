@@ -51,7 +51,7 @@ def unParseImage(image): #unparse parsed image
 	return output
 
 def changeColumn(column,image,value): #0 is leftmost for column image is unparsed image
-	for row in range(0,4):#iterate thru rows
+	for row in range(0,5):#iterate thru rows
 		image[row][column]=value
 	return image
 
