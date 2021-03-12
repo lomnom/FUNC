@@ -74,7 +74,7 @@ def flipColumn(column,image):
 def columnChangeLEDS(column,number,side,image,value): #change a set num of leds on a column if side = up, leds start from up. down otherwise
 	if number==0:
 		return image
-	for row in range(0,number-1):
+	for row in range(0,number):
 		image[row][column]=value
 
 	if not side=="up": #flip if side not up
