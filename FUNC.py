@@ -143,15 +143,23 @@ def multipleFromTo(ranges):
 def everyIndexInList(theList):
 	return fromTo(0,len(theList)-1)
 
-def splitListStrings(theList,delimiter):
+def doForAll(check,theList,action):
+	def theCheck(theList,check,n):
+		exec("result="+check)
+		return locals()["result"] #i have no idea why this makes it work
 	for n in everyIndexInList(theList):
-		theList[n]=theList[n].split(delimiter)
+		if isinstance(theList[n],list):
+			theList[n]=doForAll(check,theList[n],action)
+		elif theCheck(theList,check,n):
+			exec(action)
 	return theList
 
 def textRange(theRange):
-	theRange=theRange.replace(" ","").split(",")
-	for n in everyIndexInList(theRange):
-		theRange[n]=theRange[n].split("-")
+	if theRange.startswith("-"):
+		theRange="&"+withoutFirstChar(theRange)
+	theRange=theRange.replace(" ","").replace(",-",",&").split(",")
+	theRange=doForAll("isinstance(theList[n],str)",theRange,"theList[n]=theList[n].replace(\"--\",\"-&\").split(\"-\")")
+	theRange=doForAll("isinstance(theList[n],str)",theRange,"theList[n]=theList[n].replace(\"&\",\"-\")")
 	ranges=[]
 	for aRange in theRange:
 		if len(aRange)==1:
