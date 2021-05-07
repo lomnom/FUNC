@@ -141,7 +141,7 @@ def fromToGenerator(fromN,toN):
 	else:
 		while not n==toN:
 			n-=1
-			yield 
+			yield n
 
 def multipleFromTo(ranges):
 	fromToS=[]
