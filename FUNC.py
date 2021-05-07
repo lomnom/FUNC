@@ -132,7 +132,16 @@ def fromTo(fromN,toN):
 	return numbers
 
 def fromToGenerator(fromN,toN):
-	return range(fromN,toN+1)
+	yield fromN
+	n=fromN
+	if fromN < toN:
+		while not n==toN:
+			n+=1
+			yield n
+	else:
+		while not n==toN:
+			n-=1
+			yield 
 
 def multipleFromTo(ranges):
 	fromToS=[]
