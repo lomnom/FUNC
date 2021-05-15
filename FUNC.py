@@ -1,3 +1,13 @@
+def runBash(bashCommand,encoding="UTF-8",background=False):
+	import subprocess
+	if background:
+		subprocess.Popen(bashCommand.split())
+		return None
+	else:
+		process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
+		output, error = process.communicate()
+		return [str(output,encoding),error]
+
 def randomCase(s):
 	import random
 	result = ''
@@ -9,10 +19,22 @@ def randomCase(s):
 			result += c.lower()
 	return result
 
-def log(message): #define logging function to prevent repeated codee
+def log(message,*fields): #define logging function to prevent repeated codee
 	from datetime import datetime
 	currentTime = str(datetime.now().time())
-	print("["+currentTime+"] "+message)
+
+	additional=""
+
+	if not fields==():
+		prefixes=[["{","}"],["(",")"],["<",">"]]
+
+		for n in everyIndexInList(fields):
+			additional+=prefixes[n][0]+fields[n]+prefixes[n][1]
+
+	if isinstance(message,str):
+		print("["+currentTime+"]"+additional+" "+message)
+	else:
+		print("["+currentTime+"]"+additional+" "+str(message))
 
 def read(file):#read file function
 	with open(file) as content: #save save slot
@@ -50,24 +72,20 @@ def writeYaml(fileName,data):
 	from yaml import dump
 	return write(fileName,dump(data,allow_unicode=True))
 
+def readYamlString(string):
+	from yaml import full_load
+	return full_load(string)
+
+def dumpYamlString(data):
+	from yaml import dump
+	return dump(data,allow_unicode=True)
+
 def readJson(fileName):
 	from json import loads
 	return loads(read(fileName))
 
 def splitString(string,n):
 	chunks = [string[i:i+n] for i in range(0, len(string), n)]
-	return chunks
-
-def splitIntoChunks(string,n): #split str into n chunks 
-	words=string.split(" ")
-	temp=""
-	chunks=[]
-	for word in words:
-		if len(temp+word)>n:
-			chunks.append(temp)
-			temp=""
-		temp+=word+" "
-	chunks.append(temp)
 	return chunks
 
 def getSize(link): #get size of linked file
@@ -77,56 +95,87 @@ def getSize(link): #get size of linked file
 	log("getSize returned "+str(int(data.headers['Content-Length'])),"info:function",0)
 	return int(data.headers['Content-Length'])
 
-def endsWithAny(possibilities,string):
+def endsWithAny(possibilities,string): #check if string ends with any of the possibilities
 	for possibility in possibilities:
 		if string.endswith(possibility):
 			return True
 	return False
 
-def splitStringWithDash(string,n):
-	n-=1
-	chunks = [string[i:i+n] for i in range(0, len(string), n)]
-	if not len(chunks)==1:
-		for i in range(len(chunks)):
-			if len(chunks[i])==n and not endsWithAny(["."," ","!","?","\""],chunks[i]):
-				chunks[i]=chunks[i]+"-"
-	for i in range(len(chunks)):
-		if chunks[i].startswith(" "):
-			chunks[i]=withoutFirstChar(chunks[i])
-	return chunks
+def isAny(possibilities,theObject): #check if theObject is any of the possibilities
+	for possibility in possibilities:
+		if theObject==possibility:
+			return True
+	return False
 
-def withoutFirstChar(string):
+def splitStringWithDash(string,n): #split strings on n with a dash space-efficiently
+	chunk=""
+	chunks=[]
+	for char in string: #iterate through all chars
+		if len(chunk)==n: #add the chunk if its len is n (punctuation at back)
+			chunks+=[chunk]
+			chunk=""
+		if len(chunk)==n-1:
+			if not isAny([",",".","\"","-","?","!"],char): #dont add chunk with dash if punctuation is next
+				if chunk.endswith(" "): #if chunk ends with a space, add without dash
+					chunks+=[chunk]
+				else: #else, add with dash
+					chunks+=[chunk+"-"]
+				chunk=""
+		if not (len(chunk)==0 and char==" "): #dont add current char if it is a space and at the start of chunk
+			chunk+=char
+	return chunks+[chunk]
+
+def withoutFirstChar(string): #return string without the forst character
 	return string[1:]
 
-def splitWordBorder(string,n): #split str into n chunks 
+def withoutLastChar(string): #return string without the forst character
+	return string[:-1]
+
+def withoutFirst(string):
+	return withoutFirstChar(string)
+
+def withouLast(string):
+	return withoutLastChar(string)
+
+def makeDirTree(tree):
+	folders=withoutFirstChar(tree).split("/")
+	folders[0]=tree[0]+folders[0]
+	for folder in everyIndexInList(folders):
+		try:
+			os.mkdir("/".join(listSlice(0,folder,folders)))
+			print("/".join(listSlice(0,folder,folders)))
+		except:
+			pass
+
+def splitWordBorder(string,n): #split str into n sized chunks on the border of words
 	words=string.split(" ")
 	temp=""
 	chunks=[]
-	for word in words:
-		if len(temp+word)>n:
+	for word in words: 
+		if len(temp+word)>n: #add chunk if chunk is already bigger
 			chunks.append(temp)
 			temp=""
 		temp+=word+" "
-	chunks.append(temp)
-	return chunks
+	chunks.append(temp) #add the last chunk
+	return chunks #side note: if word is too long, it will simply do nothing
 
-def cutString(string,n):
+def cutString(string,n): #cuts a string into n size and terminate with ...
 	return splitString(string,n-3)[0]+"..."
 
-def encapsulateText(string):
+def encapsulateText(string): #encapsulate text with the help of unicode
 	string=list(string.replace(" ","_"))
 	firstChar=string.pop(0)
 	return ("["+firstChar+"͟͞".join(string)+"͟͞]").replace("_","\\_")
 
-def fromTo(fromN,toN):
+def fromTo(fromN,toN): #inclusive range but it returns a list of values and fromN can be bigger than toN
 	numbers=[fromN]
 	n=fromN
-	if fromN < toN:
-		while not n==toN:
+	if fromN < toN: #keep adding untill n is toN if toN is more than fromN
+		while not n>=toN:
 			n+=1
 			numbers+=[n]
-	else:
-		while not n==toN:
+	else: #keep subtracting untill n is toN if toN is less than fromN
+		while not n<=toN:
 			n-=1
 			numbers+=[n]
 	return numbers
@@ -143,27 +192,29 @@ def fromToGenerator(fromN,toN):
 			n-=1
 			yield n
 
-def multipleFromTo(ranges):
+def multipleFromTo(ranges): #it takes a list of ranges eg. [[1,3],[-1,-3]] 
+							#and makes a list with them ([1,2,3,-1,-2,-3])
 	fromToS=[]
 	for aRange in ranges:
 		fromToS+=[fromTo(aRange[0],aRange[1])]
 	return fromToS
 
-def everyIndexInList(theList):
+def everyIndexInList(theList): #makes a list of all indexes in list eg. [4,5,6,2,5] becomes [0,1,2,3,4]
 	return fromTo(0,len(theList)-1)
 
-def doForAll(check,theList,action):
+def doForAll(check,theList,action,recurseType=list): #recursively does a action (action) in every it
+									#em in nested list if it is not a list and passes check (check)
 	def theCheck(theList,check,n):
 		exec("result="+check)
 		return locals()["result"] #i have no idea why this makes it work
 	for n in everyIndexInList(theList):
-		if isinstance(theList[n],list):
+		if isinstance(theList[n],recurseType):
 			theList[n]=doForAll(check,theList[n],action)
 		elif theCheck(theList,check,n):
 			exec(action)
 	return theList
 
-def textRange(theRange):
+def textRange(theRange): #parses things like "1-2,3-4,8,-9,-8--9" into things like [1, 2, 3, 4, 8, -9, -8, -9]
 	if theRange.startswith("-"):
 		theRange="&"+withoutFirstChar(theRange)
 	theRange=theRange.replace(" ","").replace(",-",",&").split(",")
@@ -176,3 +227,38 @@ def textRange(theRange):
 		else:
 			ranges+=fromTo(int(aRange[0]),int(aRange[-1]))
 	return ranges
+
+def appendInFromtOfEveryLine(string,toAppend):
+	string=string.split("\n")
+	for lineNum in everyIndexInList(string):
+		string[lineNum]=string[lineNum]+toAppend
+	return "\n".join(string)
+
+def parseComments(submission,asId=False): #parse praw post comments to a list
+	replies=[]
+	for postReply in submission.comments:
+		if not len(postReply.replies)==0:
+			replies+=parseReplies(postReply,asId=asId)
+	return {"comments":replies}
+
+def parseReplies(comment,asId=False): #parse praw comment replies to a list
+	replies=[]
+	for reply in comment.replies:
+		if asId:
+			if len(reply.replies)==0:
+				replies+=[{"id":comment.id}]
+			else:
+				replies+=[{"id":comment.id,"replies":parseReplies(reply,asId=asId)}]
+		else:
+			if len(reply.replies)==0:
+				replies+=[{"comment":comment}]
+			else:
+				replies+=[{"comment":comment,"replies":parseReplies(reply,asId=asId)}]
+	return replies
+
+def download(link,to):
+	import urllib.request
+	urllib.request.urlretrieve(link, to) 
+
+def listSlice(fromN,toN,theList):
+	return theList[fromN:toN+1]
