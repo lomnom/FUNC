@@ -1,8 +1,11 @@
 def runBash(bashCommand,encoding="UTF-8",background=False):
 	import subprocess
 	if background:
-		subprocess.Popen(bashCommand.split())
-		return None
+		process=subprocess.Popen(bashCommand.split(),
+								 stdin=subprocess.PIPE, 
+								 stdout=subprocess.PIPE, 
+								 stderr=subprocess.PIPE)
+		return process
 	else:
 		process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
 		output, error = process.communicate()
@@ -44,6 +47,10 @@ def write(file,data): #function to write to file
 	with open(file, 'w') as content: #save save slot
 		content.write(str(data))
 		return True
+
+def appendTo(file,data):
+	with open(file, "a") as theFile:
+		theFile.write(data)
 
 def remove(file):
 	from os import remove
