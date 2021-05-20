@@ -16,10 +16,35 @@ def callWeb(url,headers={}):
 	response = requests.get(url,headers=headers)
 	return response.text
 
+def runInParellel(functions):
+	import threading
+	procecces=[]
+	for function in functions:
+		procecces+=[threading.Thread(target=function[0],args=function[1])
+		]
+	for process in procecces:
+		process.start()
+	return procecces
+
+def joinTheParellel(procecces):
+	for process in procecces:
+		process.join()
+
+def removeDuplicates(theList):
+	return list(dict.fromkeys(theList))
+
+def remove(file):
+	from os import remove
+	try:
+		remove(file)
+	except FileNotFoundError:
+		return "already removed!"
+
 def downloadWeb(url,outFile,headers={},retry=10):
 	import requests
 	r = requests.get(url, allow_redirects=True, headers=headers)
 	if r.status_code == 200:
+		remove(outFile)
 		open(outFile, 'wb').write(r.content)
 	elif retry==0:
 		raise FileNotFoundError
@@ -67,10 +92,6 @@ def write(file,data): #function to write to file
 def appendTo(file,data):
 	with open(file, "a") as theFile:
 		theFile.write(data)
-
-def remove(file):
-	from os import remove
-	remove(file)
 
 def exists(file):#read file function
 	try: #load slot
