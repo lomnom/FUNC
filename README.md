@@ -4,6 +4,9 @@
 pip3 install pyyaml
 pip3 install json
 pip3 install urllib
+pip3 install ndg-httpsclient
+pip3 install pyopenssl
+pip3 install pyasn1
 
 echo "import os;print(os.__file__.replace('os.py',''))" > aahifbsab.py
 PYPATH=$(python3 aahifbsab.py)
