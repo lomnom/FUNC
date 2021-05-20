@@ -11,6 +11,22 @@ def runBash(bashCommand,encoding="UTF-8",background=False):
 		output, error = process.communicate()
 		return [str(output,encoding),error]
 
+def callWeb(url,headers={}):
+	import requests
+	response = requests.get(url,headers=headers)
+	return response.text
+
+def downloadWeb(url,outFile,headers={},retry=10):
+	import requests
+	r = requests.get(url, allow_redirects=True, headers=headers)
+	if r.status_code == 200:
+		open(outFile, 'wb').write(r.content)
+	elif retry==0:
+		raise FileNotFoundError
+	else:
+		if not retry==False or retry<=0:
+			downloadWeb(url,outFile,headers=headers,retry=retry-1)
+
 def randomCase(s):
 	import random
 	result = ''
@@ -145,6 +161,7 @@ def withouLast(string):
 	return withoutLastChar(string)
 
 def makeDirTree(tree):
+	import os
 	folders=withoutFirstChar(tree).split("/")
 	folders[0]=tree[0]+folders[0]
 	for folder in everyIndexInList(folders):
@@ -153,6 +170,14 @@ def makeDirTree(tree):
 			print("/".join(listSlice(0,folder,folders)))
 		except:
 			pass
+
+def makeDir(dir):
+	import os
+	try:
+		os.mkdir(dir)
+		return "made"
+	except FileExistsError:
+		return "alreadyExists"
 
 def splitWordBorder(string,n): #split str into n sized chunks on the border of words
 	words=string.split(" ")
