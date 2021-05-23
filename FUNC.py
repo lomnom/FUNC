@@ -11,6 +11,27 @@ def runBash(bashCommand,encoding="UTF-8",background=False):
 		output, error = process.communicate()
 		return [str(output,encoding),error]
 
+def withoutIndex(theList,index):
+	theList=theList[:]
+	theList.pop(index)
+	return theList
+
+def combinations(items):
+	if len(items)>2:
+		allCombinations=[]
+		for toWorkWith in everyIndexInList(items):
+			theItems=withoutIndex(items,toWorkWith)
+			toWorkWith=items[toWorkWith]
+			otherCombinations=combinations(theItems)
+			for combination in fromToGenerator(0,len(otherCombinations)-1):
+				otherCombinations[combination]=[toWorkWith]+otherCombinations[combination]
+			allCombinations+=otherCombinations
+		return allCombinations
+	elif len(items)==2:
+		return [[items[0],items[1]],[items[1],items[0]]]
+	elif len(items)==1:
+		return items
+
 def callWeb(url,headers={}):
 	import requests
 	response = requests.get(url,headers=headers)
@@ -40,17 +61,33 @@ def remove(file):
 	except FileNotFoundError:
 		return "already removed!"
 
-def downloadWeb(url,outFile,headers={},retry=10):
-	import requests
-	r = requests.get(url, allow_redirects=True, headers=headers)
-	if r.status_code == 200:
-		remove(outFile)
-		open(outFile, 'wb').write(r.content)
-	elif retry==0:
-		raise FileNotFoundError
-	else:
-		if not retry==False or retry<=0:
-			downloadWeb(url,outFile,headers=headers,retry=retry-1)
+def downloadWeb(url,outFile,headers={"user-agent":"mozzila"},retry=10):
+	try:
+		import requests
+		sess = requests.Session()
+		adapter = requests.adapters.HTTPAdapter(max_retries = 20)
+		sess.mount('http://', adapter)
+		try:
+			r = sess.get(url, allow_redirects=True, headers=headers)
+		except requests.exceptions.ConnectionError:
+			if not retry==0:
+				downloadWeb(url,outFile,headers=headers,retry=retry-1)
+				return
+			else:
+				print(r.text)
+				raise FileNotFoundError
+		if r.status_code == 200:
+			remove(outFile)
+			open(outFile, 'wb').write(r.content)
+		elif retry==0:
+			print(url)
+			print(r.status_code)
+			raise FileNotFoundError
+		else:
+			if not retry==False or retry<0:
+				downloadWeb(url,outFile,headers=headers,retry=retry-1)
+	except:
+		downloadWeb(url,outFile,headers=headers,retry=retry-1)
 
 def randomCase(s):
 	import random
