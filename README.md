@@ -22,3 +22,8 @@ PYPATH=$(python3 aahifbsab.py)
 rm aahifbsab.py
 rm "$PYPATH"FUNC.py
 ```
+## how to figure out what anything does
+```
+import FUNC as f
+help(f)
+```
