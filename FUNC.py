@@ -1,3 +1,4 @@
+# runs a command, actually not bash, but im too scared to rename it
 def runBash(bashCommand,encoding="UTF-8",background=False):
 	import subprocess
 	if background:
@@ -11,18 +12,32 @@ def runBash(bashCommand,encoding="UTF-8",background=False):
 		output, error = process.communicate()
 		return [str(output,encoding),error]
 
+# {row:1,column:1}, {row:2,column:2}  
+# 123    56
+# 456 -> 89
+# 789   
+def crop2dList(theList,start,end):
+	cropped=[]
+	for row in fromToGenerator(start["row"],end["row"]):
+		cropped+=[[]]
+		for column in fromToGenerator(start["column"],end["column"]):
+			cropped[-1]+=theList[row][column]
+	return cropped
+
+#return the list/str without index
 def withoutIndex(theList,index):
 	theList=theList[:]
 	theList.pop(index)
 	return theList
 
-def combinations(items):
+#return s all possible arrangemants of items
+def arrangements(items):
 	if len(items)>2:
 		allCombinations=[]
 		for toWorkWith in everyIndexInList(items):
 			theItems=withoutIndex(items,toWorkWith)
 			toWorkWith=items[toWorkWith]
-			otherCombinations=combinations(theItems)
+			otherCombinations=arrangements(theItems)
 			for combination in fromToGenerator(0,len(otherCombinations)-1):
 				otherCombinations[combination]=[toWorkWith]+otherCombinations[combination]
 			allCombinations+=otherCombinations
@@ -32,12 +47,15 @@ def combinations(items):
 	elif len(items)==1:
 		return items
 
+#contact a website and return the text response
 def callWeb(url,headers={}):
 	import requests
 	response = requests.get(url,headers=headers)
 	return response.text
 
-def runInParellel(functions):
+#run the functions in another thread, and return a list of thread objects that can be passed into joinTheParallel
+#format of input: [[function,argsInTuple],[anotherFunction,moreArgsInTuple]]
+def runInParallel(functions):
 	import threading
 	procecces=[]
 	for function in functions:
@@ -47,13 +65,25 @@ def runInParellel(functions):
 		process.start()
 	return procecces
 
-def joinTheParellel(procecces):
+#wait for all threads in list of thread objects to end, and then join them
+def joinTheParallel(procecces):
 	for process in procecces:
 		process.join()
 
+#this is useless
+def joinTheFinished(procecces):
+	unjoined=[]
+	for process in procecces:
+		process.join(timeout=0)
+		if process.is_alive():
+			unjoined+=[process]
+	return unjoined
+
+#remove duplicates from a list
 def removeDuplicates(theList):
 	return list(dict.fromkeys(theList))
 
+#remove a File, just that it doesnt error when the file doesnt exist already, but returns "already removed"
 def remove(file):
 	from os import remove
 	try:
@@ -61,6 +91,7 @@ def remove(file):
 	except FileNotFoundError:
 		return "already removed!"
 
+# download content from a website, retries is the number of times to retry
 def downloadWeb(url,outFile,headers={"user-agent":"mozzila"},retry=10):
 	try:
 		import requests
@@ -89,6 +120,7 @@ def downloadWeb(url,outFile,headers={"user-agent":"mozzila"},retry=10):
 	except:
 		downloadWeb(url,outFile,headers=headers,retry=retry-1)
 
+#randomise the case of a string
 def randomCase(s):
 	import random
 	result = ''
@@ -100,6 +132,9 @@ def randomCase(s):
 			result += c.lower()
 	return result
 
+#log string as [time] string
+#fields are optional args after string that get printed as
+#[time] {optional 1} (optional 2) <optional 3>
 def log(message,*fields): #define logging function to prevent repeated codee
 	from datetime import datetime
 	currentTime = str(datetime.now().time())
@@ -117,19 +152,23 @@ def log(message,*fields): #define logging function to prevent repeated codee
 	else:
 		print("["+currentTime+"]"+additional+" "+str(message))
 
+#read a file in ext mode
 def read(file):#read file function
 	with open(file) as content: #save save slot
 		return content.read()
 
+#write a file in text mode
 def write(file,data): #function to write to file
 	with open(file, 'w') as content: #save save slot
 		content.write(str(data))
 		return True
 
+#append data to a file
 def appendTo(file,data):
 	with open(file, "a") as theFile:
 		theFile.write(data)
 
+#check if a file exists
 def exists(file):#read file function
 	try: #load slot
 		with open(file) as content: #save save slot
@@ -137,6 +176,7 @@ def exists(file):#read file function
 	except OSError:
 		return False
 
+#read a file, and return backup if the file does not exist
 def readWithBackup(file,backup):#read file function
 	try: #load slot
 		with open(file) as content: #save save slot
@@ -145,30 +185,75 @@ def readWithBackup(file,backup):#read file function
 		write(file,backup)
 		return backup
 
+#read a yaml file
 def readYaml(fileName):
 	from yaml import full_load
 	return full_load(read(fileName))
 
+#write a dict to a yaml file
 def writeYaml(fileName,data):
 	from yaml import dump
 	return write(fileName,dump(data,allow_unicode=True))
 
+#parse a yaml string
 def readYamlString(string):
 	from yaml import full_load
 	return full_load(string)
 
+#dump a dict as yaml
 def dumpYamlString(data):
 	from yaml import dump
 	return dump(data,allow_unicode=True)
 
+#read a json file
 def readJson(fileName):
 	from json import loads
 	return loads(read(fileName))
 
+# split a string (or a list) into n sized chunks
 def splitString(string,n):
 	chunks = [string[i:i+n] for i in range(0, len(string), n)]
 	return chunks
 
+#convert an integer to ternary
+def ternary(n):
+	if n == 0:
+		return '0'
+	nums = []
+	while n:
+		n, r = divmod(n, 3)
+		nums.append(str(r))
+	return ''.join(reversed(nums))
+
+#convert a ternary integer to int
+def toInt(n):
+	return int(n,3)
+
+#pad text with padding untill text is n or more long
+def addPadding(text,n,padding=" "):
+	return (padding*(n-len(text)))+text
+
+#convert a ascii string into ternary
+def strToTernary(text,maxOrdinal=255):
+	maxLength=len(ternary(maxOrdinal))
+	print(maxLength,"maxlength")
+	result=""
+	for char in text:
+		print(char,addPadding(ternary(ord(char)),maxLength,padding="0"),ternary(ord(char)),ord(char),"padded")
+		result+=addPadding(ternary(ord(char)),maxLength,padding="0")
+	return result
+
+#convert ternary to a ascii string
+def ternaryToStr(ternaryValue,maxOrdinal=255):
+	maxLength=len(ternary(maxOrdinal))
+	ternaries=splitString(ternaryValue,maxLength)
+	result=""
+	for aTernary in ternaries:
+		print(aTernary,chr(toInt(aTernary)))
+		result+=chr(toInt(aTernary))
+	return result
+
+#get the size of the linked webPage
 def getSize(link): #get size of linked file
 	import urllib
 	req = urllib.request.Request(link, method='HEAD')
@@ -176,19 +261,22 @@ def getSize(link): #get size of linked file
 	log("getSize returned "+str(int(data.headers['Content-Length'])),"info:function",0)
 	return int(data.headers['Content-Length'])
 
-def endsWithAny(possibilities,string): #check if string ends with any of the possibilities
+#check if a string ends with any of the possibilities
+def endsWithAny(possibilities,string):
 	for possibility in possibilities:
 		if string.endswith(possibility):
 			return True
 	return False
 
-def isAny(possibilities,theObject): #check if theObject is any of the possibilities
+#check if theObject is any of the possibilities
+def isAny(possibilities,theObject): 
 	for possibility in possibilities:
 		if theObject==possibility:
 			return True
 	return False
 
-def splitStringWithDash(string,n): #split strings on n with a dash space-efficiently
+#split strings on n with a dash space-efficiently
+def splitStringWithDash(string,n):
 	chunk=""
 	chunks=[]
 	for char in string: #iterate through all chars
@@ -206,18 +294,23 @@ def splitStringWithDash(string,n): #split strings on n with a dash space-efficie
 			chunk+=char
 	return chunks+[chunk]
 
-def withoutFirstChar(string): #return string without the forst character
+#return string (or list) without the forst character
+def withoutFirstChar(string):
 	return string[1:]
 
-def withoutLastChar(string): #return string without the forst character
+#return string (or list) without the forst character
+def withoutLastChar(string):
 	return string[:-1]
 
+#return string (or list) without the forst character
 def withoutFirst(string):
 	return withoutFirstChar(string)
 
+#return string (or list) without the forst character
 def withouLast(string):
 	return withoutLastChar(string)
 
+#make a directory terr. example input: `makeDirTree("/hello/world/haha")`
 def makeDirTree(tree):
 	import os
 	folders=withoutFirstChar(tree).split("/")
@@ -229,6 +322,7 @@ def makeDirTree(tree):
 		except:
 			pass
 
+#mak a directory
 def makeDir(dir):
 	import os
 	try:
@@ -237,7 +331,8 @@ def makeDir(dir):
 	except FileExistsError:
 		return "alreadyExists"
 
-def splitWordBorder(string,n): #split str into n sized chunks on the border of words
+#split str into n sized chunks on the border of words
+def splitWordBorder(string,n): 
 	words=string.split(" ")
 	temp=""
 	chunks=[]
@@ -249,15 +344,18 @@ def splitWordBorder(string,n): #split str into n sized chunks on the border of w
 	chunks.append(temp) #add the last chunk
 	return chunks #side note: if word is too long, it will simply do nothing
 
-def cutString(string,n): #cuts a string into n size and terminate with ...
+#cuts a string into n size and terminate with ...
+def cutString(string,n):
 	return splitString(string,n-3)[0]+"..."
 
-def encapsulateText(string): #encapsulate text with the help of unicode
+#encapsulate text with the help of unicode
+def encapsulateText(string):
 	string=list(string.replace(" ","_"))
 	firstChar=string.pop(0)
 	return ("["+firstChar+"͟͞".join(string)+"͟͞]").replace("_","\\_")
 
-def fromTo(fromN,toN): #inclusive range but it returns a list of values and fromN can be bigger than toN
+#inclusive range() but it returns a list of values and fromN can be bigger than toN
+def fromTo(fromN,toN):
 	numbers=[fromN]
 	n=fromN
 	if fromN < toN: #keep adding untill n is toN if toN is more than fromN
@@ -270,6 +368,7 @@ def fromTo(fromN,toN): #inclusive range but it returns a list of values and from
 			numbers+=[n]
 	return numbers
 
+#inclusive range() but fromN can be bigger than toN
 def fromToGenerator(fromN,toN):
 	yield fromN
 	n=fromN
@@ -282,18 +381,24 @@ def fromToGenerator(fromN,toN):
 			n-=1
 			yield n
 
-def multipleFromTo(ranges): #it takes a list of ranges eg. [[1,3],[-1,-3]] 
-							#and makes a list with them ([1,2,3,-1,-2,-3])
+#it takes a list of ranges eg. [[1,3],[-1,-3]] 
+#and makes a list with them ([1,2,3,-1,-2,-3])
+def multipleFromTo(ranges): 
 	fromToS=[]
 	for aRange in ranges:
 		fromToS+=[fromTo(aRange[0],aRange[1])]
 	return fromToS
 
-def everyIndexInList(theList): #makes a list of all indexes in list eg. [4,5,6,2,5] becomes [0,1,2,3,4]
-	return fromTo(0,len(theList)-1)
+#makes a list of all indexes in list eg. ["a","b","c","d","e"] becomes [0,1,2,3,4]
+def everyIndexInList(theList):
+	if not len(theList)==0:
+		return fromToGenerator(0,len(theList)-1)
+	else:
+		return []
 
-def doForAll(check,theList,action,recurseType=list): #recursively does a action (action) in every it
-									#em in nested list if it is not a list and passes check (check)
+#recursively does a action (action) in every it
+#em in nested list if it is not of type recurseType and passes check (check)
+def doForAll(check,theList,action,recurseType=list):
 	def theCheck(theList,check,n):
 		exec("result="+check)
 		return locals()["result"] #i have no idea why this makes it work
@@ -304,7 +409,12 @@ def doForAll(check,theList,action,recurseType=list): #recursively does a action 
 			exec(action)
 	return theList
 
-def textRange(theRange): #parses things like "1-2,3-4,8,-9,-8--9" into things like [1, 2, 3, 4, 8, -9, -8, -9]
+def getUnicodeChar(hex):
+	exec("theChar=\"\\u"+hex+"\"")
+	return locals()["theChar"]
+
+#parses things like "1-2,3-4,8,-9,-8--9" into things like [1, 2, 3, 4, 8, -9, -8, -9]
+def textRange(theRange): 
 	if theRange.startswith("-"):
 		theRange="&"+withoutFirstChar(theRange)
 	theRange=theRange.replace(" ","").replace(",-",",&").split(",")
@@ -324,14 +434,16 @@ def appendInFromtOfEveryLine(string,toAppend):
 		string[lineNum]=string[lineNum]+toAppend
 	return "\n".join(string)
 
-def parseComments(submission,asId=False): #parse praw post comments to a list
+#parse praw post comments to a list
+def parseComments(submission,asId=False): 
 	replies=[]
 	for postReply in submission.comments:
 		if not len(postReply.replies)==0:
 			replies+=parseReplies(postReply,asId=asId)
 	return {"comments":replies}
 
-def parseReplies(comment,asId=False): #parse praw comment replies to a list
+#parse praw comment replies to a list
+def parseReplies(comment,asId=False): 
 	replies=[]
 	for reply in comment.replies:
 		if asId:
@@ -346,9 +458,11 @@ def parseReplies(comment,asId=False): #parse praw comment replies to a list
 				replies+=[{"comment":comment,"replies":parseReplies(reply,asId=asId)}]
 	return replies
 
+#i forgot
 def download(link,to):
 	import urllib.request
-	urllib.request.urlretrieve(link, to) 
+	urllib.request.urlretrieve(link, to)
 
+#hmm
 def listSlice(fromN,toN,theList):
 	return theList[fromN:toN+1]
