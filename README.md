@@ -23,7 +23,7 @@ rm aahifbsab.py
 rm "$PYPATH"FUNC.py
 ```
 ## how to figure out what anything does
-```
+```python
 import FUNC as f
 help(f)
 ```
