@@ -349,7 +349,10 @@ def splitWordBorder(string,n):
 #cuts a string into n size and terminate with ...
 def cutString(string,n):
 	if len(string)>n:
-		return splitString(string,n-3)[0]+"..."
+		if n<3:
+			return "."*n
+		else:
+			return splitString(string,n-3)[0]+"..."
 	else:
 		return string
 
