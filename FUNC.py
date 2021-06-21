@@ -1,3 +1,5 @@
+#FUNCTIONS AHHAHAHA
+
 # runs a command, actually not bash, but im too scared to rename it
 def runBash(bashCommand,encoding="UTF-8",background=False):
 	import subprocess
@@ -346,7 +348,10 @@ def splitWordBorder(string,n):
 
 #cuts a string into n size and terminate with ...
 def cutString(string,n):
-	return splitString(string,n-3)[0]+"..."
+	if len(string)>n:
+		return splitString(string,n-3)[0]+"..."
+	else:
+		return string
 
 #encapsulate text with the help of unicode
 def encapsulateText(string):
